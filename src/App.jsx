@@ -248,6 +248,35 @@ const css = `
 
   .integration-row{display:flex; align-items:center; justify-content:between; gap:10px; padding:11px 0; border-bottom:1px solid var(--line-soft);}
   .connline{width:7px; height:7px; border-radius:50%; background:var(--good); box-shadow:0 0 0 3px var(--good-soft);}
+
+  /* Interactive topbar dropdowns */
+  .nx-pill.active, .nx-iconbtn.active{border-color:var(--ai-line); background:var(--ai-soft); color:#BFD5FF;}
+  .nx-dd-wrap{position:relative;}
+  .nx-dd{
+    position:absolute; top:calc(100% + 8px); background:var(--bg-1); border:1px solid var(--line);
+    border-radius:10px; box-shadow:0 14px 34px rgba(0,0,0,.45); z-index:50; overflow:hidden;
+  }
+  .nx-dd.left{left:0;} .nx-dd.right{right:0;}
+  .nx-dd-header{padding:9px 12px; font-size:10.5px; text-transform:uppercase; letter-spacing:.5px; color:var(--tx-2); border-bottom:1px solid var(--line-soft);}
+  .nx-dd-item{
+    display:flex; align-items:center; justify-content:space-between; gap:10px; padding:9px 12px; font-size:12.4px;
+    cursor:pointer; color:var(--tx-1); white-space:nowrap;
+  }
+  .nx-dd-item:hover{background:var(--bg-2); color:var(--tx-0);}
+  .nx-dd-item.selected{color:#BFD5FF; background:var(--ai-soft);}
+  .nx-dd-scroll{max-height:280px; overflow-y:auto;}
+  .search-dd{width:100%; max-width:420px;}
+  .search-group-label{padding:8px 12px 3px; font-size:10px; text-transform:uppercase; letter-spacing:.5px; color:var(--tx-2);}
+  .search-result{display:flex; flex-direction:column; gap:1px; padding:8px 12px; cursor:pointer;}
+  .search-result:hover{background:var(--bg-2);}
+  .search-result .r-title{font-size:12.5px; font-weight:600; color:var(--tx-0);}
+  .search-result .r-sub{font-size:11px; color:var(--tx-2);}
+  .notif-item{display:flex; gap:9px; padding:10px 12px; border-bottom:1px solid var(--line-soft); cursor:pointer; align-items:flex-start;}
+  .notif-item:hover{background:var(--bg-2);}
+  .notif-item:last-child{border-bottom:none;}
+  .notif-dot{width:7px; height:7px; border-radius:50%; margin-top:5px; flex-shrink:0;}
+  .user-dd-item{display:flex; align-items:center; gap:9px; padding:9px 14px; font-size:12.5px; color:var(--tx-1); cursor:pointer;}
+  .user-dd-item:hover{background:var(--bg-2); color:var(--tx-0);}
 `;
 
 /* ---------------------------------- MOCK DATA ---------------------------------- */
@@ -438,6 +467,159 @@ const TICKETS = [
   { id: "TCK-3341", customer: "apex", subject: "Quarterly access review request", priority: "Medium", status: "Open", sla: "4d 6h", tech: "Alex Rowan", aiConfidence: 90, aiSummary: "Compliance-driven recurring request.", investigation: null },
 ];
 
+const PATCH_FINDINGS = [
+  { id: "cve-31207", cve: "CVE-2026-31207", severity: "Critical", cvss: 9.1, exploited: true,
+    customer: "bluepeak", affected: 5, exposure: "Internet-facing", businessImportance: "High",
+    compatible: true, recommendation: "Deploy immediately", investigation: "inv-1044" },
+  { id: "cve-28810", cve: "CVE-2026-28810", severity: "High", cvss: 8.4, exploited: false,
+    customer: "acme", affected: 3, exposure: "Internal only", businessImportance: "Medium",
+    compatible: true, recommendation: "Schedule during maintenance window", investigation: null },
+  { id: "cve-25502", cve: "CVE-2026-25502", severity: "High", cvss: 7.8, exploited: false,
+    customer: "greenfield", affected: 2, exposure: "Internet-facing", businessImportance: "High",
+    compatible: true, recommendation: "Schedule during maintenance window", investigation: null },
+  { id: "cve-19934", cve: "CVE-2026-19934", severity: "Medium", cvss: 6.5, exploited: false,
+    customer: "apex", affected: 8, exposure: "Internal only", businessImportance: "Low",
+    compatible: true, recommendation: "Schedule during maintenance window", investigation: null },
+  { id: "cve-17720", cve: "CVE-2026-17720", severity: "Critical", cvss: 9.4, exploited: true,
+    customer: "northstar", affected: 1, exposure: "Internet-facing", businessImportance: "High",
+    compatible: false, recommendation: "Verify compatibility before deploying", investigation: null },
+];
+
+const BACKUP_JOBS = [
+  { id: "bkp-01", device: "acme-sql01", customer: "acme", repo: "Azure Blob — ACME-REPO-01", lastRun: "Today 02:14", status: "Failed",
+    errorCode: "0x8007007A", rpo: "24h (breached)", sizeGb: 412, durationMin: 38, restoreTest: "Pending" },
+  { id: "bkp-02", device: "bp-posdb", customer: "bluepeak", repo: "Cove — BP-REPO-01", lastRun: "Yesterday 23:40", status: "Failed",
+    errorCode: "AUTH_TOKEN_EXPIRED", rpo: "24h (breached)", sizeGb: 88, durationMin: 12, restoreTest: "Pending" },
+  { id: "bkp-03", device: "BLUEPEAK-FS02", customer: "bluepeak", repo: "Cove — BP-REPO-01", lastRun: "Yesterday 23:44", status: "Failed",
+    errorCode: "AUTH_TOKEN_EXPIRED", rpo: "24h (breached)", sizeGb: 210, durationMin: 24, restoreTest: "Pending" },
+  { id: "bkp-04", device: "BLUEPEAK-APP01", customer: "bluepeak", repo: "Cove — BP-REPO-01", lastRun: "2 days ago", status: "Failed",
+    errorCode: "AUTH_TOKEN_EXPIRED", rpo: "24h (breached)", sizeGb: 64, durationMin: 9, restoreTest: "Pending" },
+  { id: "bkp-05", device: "acme-dc01", customer: "acme", repo: "Azure Blob — ACME-REPO-01", lastRun: "Today 01:10", status: "Success",
+    errorCode: "—", rpo: "24h (met)", sizeGb: 51, durationMin: 6, restoreTest: "Passed 96%" },
+  { id: "bkp-06", device: "gf-emr01", customer: "greenfield", repo: "Veeam — GF-REPO-01", lastRun: "Today 00:45", status: "Success",
+    errorCode: "—", rpo: "12h (met)", sizeGb: 190, durationMin: 21, restoreTest: "Passed 98%" },
+  { id: "bkp-07", device: "ns-fs01", customer: "northstar", repo: "Datto — NS-REPO-01", lastRun: "Today 01:55", status: "Success",
+    errorCode: "—", rpo: "24h (met)", sizeGb: 77, durationMin: 8, restoreTest: "Passed 94%" },
+  { id: "bkp-08", device: "apex-vm03", customer: "apex", repo: "Acronis — APEX-REPO-01", lastRun: "Today 02:30", status: "Success",
+    errorCode: "—", rpo: "24h (met)", sizeGb: 33, durationMin: 4, restoreTest: "Not tested" },
+];
+
+const SECURITY_FINDINGS = [
+  { id: "sf-1", title: "Impossible travel sign-in — privileged account", source: "Entra ID Protection", severity: "crit",
+    customer: "acme", asset: "john.reyes@acmemfg.com", firstSeen: "3h ago", confidence: 91, investigation: "inv-1042" },
+  { id: "sf-2", title: "New OAuth app granted mailbox read access", source: "Microsoft Graph", severity: "att",
+    customer: "acme", asset: "Tenant-wide", firstSeen: "6h ago", confidence: 84, investigation: null },
+  { id: "sf-3", title: "Local administrator group drift detected", source: "Defender for Endpoint", severity: "att",
+    customer: "bluepeak", asset: "BLUEPEAK-POSDB", firstSeen: "1d ago", confidence: 88, investigation: null },
+  { id: "sf-4", title: "Unmanaged device connected to corporate Wi-Fi", source: "Firewall", severity: "warn",
+    customer: "greenfield", asset: "Unknown-MAC-4F2C", firstSeen: "2d ago", confidence: 76, investigation: null },
+  { id: "sf-5", title: "BitLocker disabled after firmware update", source: "Defender for Endpoint", severity: "warn",
+    customer: "apex", asset: "APEX-LT-092", firstSeen: "4h ago", confidence: 95, investigation: null },
+];
+
+const IDENTITY_USERS = [
+  { name: "John Reyes", email: "john.reyes@acmemfg.com", customer: "acme", role: "Global Administrator", lastSignIn: "87 days ago", mfa: "Registered, unused", risk: "Critical" },
+  { name: "Priya Shah", email: "priya.shah@acmemfg.com", customer: "acme", role: "User Administrator", lastSignIn: "2h ago", mfa: "Enforced", risk: "Low" },
+  { name: "Marcus Webb", email: "mwebb@bluepeakretail.com", customer: "bluepeak", role: "Global Administrator", lastSignIn: "1h ago", mfa: "Enforced", risk: "Low" },
+  { name: "svc-backup-agent", email: "svc-backup@bluepeakretail.com", customer: "bluepeak", role: "Exchange Administrator", lastSignIn: "45 days ago", mfa: "Not enrolled", risk: "Medium" },
+  { name: "Dr. Alicia Patel", email: "apatel@greenfieldhc.org", customer: "greenfield", role: "User", lastSignIn: "10m ago", mfa: "Enforced", risk: "Low" },
+  { name: "guest_vendor_842", email: "vendor842@guest.northstarlegal.com", customer: "northstar", role: "Guest — SharePoint contributor", lastSignIn: "61 days ago", mfa: "Not enrolled", risk: "Medium" },
+  { name: "Tom Alvarez", email: "talvarez@apexlogistics.com", customer: "apex", role: "Global Administrator", lastSignIn: "3h ago", mfa: "Enforced", risk: "Low" },
+];
+
+const NETWORK_SITES = [
+  { site: "Austin DC", customer: "bluepeak", latencyBaseline: 22, latencyCurrent: 170, packetLoss: 2.3, bandwidthUtil: 61, status: "warn" },
+  { site: "Detroit HQ", customer: "acme", latencyBaseline: 14, latencyCurrent: 16, packetLoss: 0.1, bandwidthUtil: 44, status: "good" },
+  { site: "Chicago Office", customer: "northstar", latencyBaseline: 18, latencyCurrent: 19, packetLoss: 0.0, bandwidthUtil: 31, status: "good" },
+  { site: "Columbus Clinic", customer: "greenfield", latencyBaseline: 20, latencyCurrent: 22, packetLoss: 0.2, bandwidthUtil: 52, status: "good" },
+  { site: "Memphis Hub", customer: "apex", latencyBaseline: 16, latencyCurrent: 15, packetLoss: 0.0, bandwidthUtil: 38, status: "good" },
+];
+
+const CLOUD_RESOURCES = [
+  { name: "acme-erp-vm02", customer: "acme", provider: "Azure", type: "VM", region: "East US", cpuAvg: 4, costMonth: 312, publicExposure: false, backup: "ok", flag: "Idle — under 5% CPU for 30 days" },
+  { name: "bluepeak-storage01", customer: "bluepeak", provider: "Azure", type: "Storage Account", region: "South Central US", cpuAvg: null, costMonth: 88, publicExposure: true, backup: "ok", flag: "Public blob access enabled" },
+  { name: "greenfield-sql-prod", customer: "greenfield", provider: "Azure", type: "SQL Database", region: "East US 2", cpuAvg: 34, costMonth: 640, publicExposure: false, backup: "ok", flag: null },
+  { name: "apex-app-cluster", customer: "apex", provider: "AWS", type: "EC2 Auto Scaling", region: "us-east-1", cpuAvg: 41, costMonth: 1120, publicExposure: false, backup: "ok", flag: null },
+  { name: "northstar-backup-vault", customer: "northstar", provider: "Azure", type: "Recovery Vault", region: "North Central US", cpuAvg: null, costMonth: 54, publicExposure: false, backup: "ok", flag: null },
+];
+
+const AUTOMATIONS = [
+  { name: "Restart service", category: "Monitoring", risk: "Safe", approval: "Auto-approve", success: 98, runs: 214 },
+  { name: "Clear temp files / disk cleanup", category: "Monitoring", risk: "Safe", approval: "Auto-approve", success: 99, runs: 176 },
+  { name: "Collect diagnostics", category: "Monitoring", risk: "Safe", approval: "Auto-approve", success: 100, runs: 340 },
+  { name: "User onboarding", category: "Identity", risk: "Medium", approval: "Requires approval", success: 96, runs: 41 },
+  { name: "User offboarding", category: "Identity", risk: "Medium", approval: "Requires approval", success: 97, runs: 33 },
+  { name: "Revoke session / isolate device", category: "Security", risk: "Medium", approval: "Requires approval", success: 100, runs: 12 },
+  { name: "Retry backup job", category: "Backup", risk: "Safe", approval: "Auto-approve", success: 91, runs: 58 },
+  { name: "Run restore test", category: "Backup", risk: "Safe", approval: "Auto-approve", success: 94, runs: 22 },
+  { name: "Deploy patch", category: "Patch", risk: "Medium", approval: "Requires approval", success: 95, runs: 89 },
+  { name: "Schedule reboot", category: "Patch", risk: "Medium", approval: "Requires approval", success: 99, runs: 74 },
+  { name: "Create / escalate ticket", category: "Ticketing", risk: "Safe", approval: "Auto-approve", success: 100, runs: 402 },
+  { name: "Delete user / production data", category: "Identity", risk: "High", approval: "Never autonomous", success: null, runs: 0 },
+];
+
+const AGENTS = [
+  { name: "Monitoring Agent", desc: "Detects and investigates infrastructure anomalies across CPU, disk, services, and event logs.",
+    tools: ["get_device_metrics", "get_event_logs", "get_services"], risk: "Low", status: "Active", lastActivity: "2 min ago", actionsToday: 14 },
+  { name: "Security Agent", desc: "Correlates Defender, firewall, and identity signals into unified investigations.",
+    tools: ["get_security_alerts", "get_signins", "isolate_device"], risk: "Medium", status: "Active", lastActivity: "8 min ago", actionsToday: 6 },
+  { name: "Identity Auditor", desc: "Continuously audits users, roles, MFA coverage, and privileged account activity.",
+    tools: ["get_user", "get_signins", "get_directory_roles"], risk: "Low", status: "Active", lastActivity: "31 min ago", actionsToday: 3 },
+  { name: "Backup Agent", desc: "Monitors backup job health, RPO compliance, and runs recovery verification.",
+    tools: ["get_backup_status", "run_diagnostic", "retry_backup"], risk: "Low", status: "Active", lastActivity: "12 min ago", actionsToday: 9 },
+  { name: "Patch Agent", desc: "Prioritizes CVEs by exploitability and exposure, and manages deployment windows.",
+    tools: ["get_patch_status", "get_vulnerabilities", "schedule_patch"], risk: "Medium", status: "Active", lastActivity: "1h ago", actionsToday: 4 },
+  { name: "Ticket Agent", desc: "Triages incoming tickets, drafts responses, and assigns technicians.",
+    tools: ["get_ticket_history", "create_ticket", "search_knowledge"], risk: "Low", status: "Active", lastActivity: "1 min ago", actionsToday: 37 },
+  { name: "Documentation Agent", desc: "Generates and updates runbooks, tickets notes, and change documentation.",
+    tools: ["search_knowledge", "create_ticket"], risk: "Low", status: "Idle", lastActivity: "3h ago", actionsToday: 5 },
+  { name: "Executive Agent", desc: "Compiles monthly IT health reports and prioritized recommendations per customer.",
+    tools: ["get_device", "get_ticket_history", "get_security_alerts"], risk: "Low", status: "Idle", lastActivity: "Yesterday", actionsToday: 0 },
+];
+
+const KNOWLEDGE_ARTICLES = [
+  { id: "KB-102", title: "Resolving VSS backup timeout errors (0x8007007A)", source: "SOP", customer: "Global", updated: "3 months ago" },
+  { id: "KB-118", title: "ACME network diagram & VLAN reference", source: "Customer Documentation", customer: "acme", updated: "1 month ago" },
+  { id: "TCK-3201", title: "Backup repository auth token renewal procedure", source: "Past Ticket", customer: "bluepeak", updated: "2 weeks ago" },
+  { id: "KB-094", title: "Dormant privileged account remediation runbook", source: "SOP", customer: "Global", updated: "5 months ago" },
+  { id: "AI-DOC-041", title: "ACME-SQL01 disk pressure — AI-generated incident summary", source: "AI-generated", customer: "acme", updated: "Today" },
+  { id: "KB-077", title: "FortiGate WAN failover configuration guide", source: "Vendor Documentation", customer: "Global", updated: "6 months ago" },
+  { id: "KB-133", title: "Microsoft Graph Conditional Access baseline policy", source: "SOP", customer: "Global", updated: "2 months ago" },
+];
+
+const COMPLIANCE_CONTROLS = [
+  { control: "Multi-factor authentication enforced", status: "Passed", evidence: "94% of privileged accounts enforced", frameworks: ["CIS","ISO 27001","SOC 2","NIST"] },
+  { control: "Data encryption at rest", status: "Passed", evidence: "All Azure Storage accounts confirmed encrypted", frameworks: ["ISO 27001","SOC 2","HIPAA","GDPR"] },
+  { control: "Backup & recovery tested", status: "Partial", evidence: "3 of 24 customers missing verified restore test", frameworks: ["SOC 2","NIST","HIPAA"] },
+  { control: "Least-privilege admin access", status: "Failed", evidence: "1 dormant Global Administrator identified", frameworks: ["CIS","ISO 27001","SOC 2"] },
+  { control: "Centralized audit logging", status: "Passed", evidence: "Sentinel ingestion active across all tenants", frameworks: ["SOC 2","NIST","ISO 27001"] },
+  { control: "Endpoint protection deployed", status: "Passed", evidence: "Defender coverage at 96% of managed endpoints", frameworks: ["CIS","NIST"] },
+  { control: "Data subject access request process", status: "Partial", evidence: "Documented, not yet tested end-to-end", frameworks: ["GDPR"] },
+];
+
+const INTEGRATIONS = [
+  { name: "N-central", category: "RMM", status: "Connected", health: "Healthy", lastSync: "1 min ago" },
+  { name: "SuperOps", category: "PSA", status: "Connected", health: "Healthy", lastSync: "3 min ago" },
+  { name: "Microsoft Graph / Entra ID", category: "Microsoft", status: "Connected", health: "Healthy", lastSync: "2 min ago" },
+  { name: "Microsoft Defender", category: "Microsoft", status: "Connected", health: "Healthy", lastSync: "4 min ago" },
+  { name: "Azure", category: "Microsoft", status: "Connected", health: "Healthy", lastSync: "5 min ago" },
+  { name: "Veeam", category: "Backup", status: "Connected", health: "Healthy", lastSync: "12 min ago" },
+  { name: "Cove", category: "Backup", status: "Connected", health: "Degraded", lastSync: "6h ago" },
+  { name: "CrowdStrike", category: "Security", status: "Disconnected", health: "—", lastSync: "—" },
+  { name: "Sophos", category: "Security", status: "Connected", health: "Healthy", lastSync: "9 min ago" },
+  { name: "Fortinet", category: "Network", status: "Connected", health: "Healthy", lastSync: "2 min ago" },
+  { name: "ConnectWise PSA", category: "PSA", status: "Disconnected", health: "—", lastSync: "—" },
+  { name: "Datto", category: "Backup", status: "Connected", health: "Healthy", lastSync: "18 min ago" },
+];
+
+const NOTIFICATIONS = [
+  { id: "n1", tone: "crit", text: "ACME-SQL01 disk pressure escalated to Critical", time: "2 min ago", investigation: "inv-1041" },
+  { id: "n2", tone: "warn", text: "3 backup jobs failing at BluePeak Retail", time: "18 min ago", investigation: "inv-1043" },
+  { id: "n3", tone: "att", text: "CVE-2026-31207 published — 5 servers exposed", time: "1h ago", investigation: "inv-1044" },
+  { id: "n4", tone: "warn", text: "WAN latency anomaly at BluePeak Austin DC", time: "3h ago", investigation: "inv-1045" },
+  { id: "n5", tone: "good", text: "Patch deployment completed for Northstar Legal", time: "5h ago", investigation: null },
+];
+
 const NAV_SECTIONS = [
   { label: "Operate", items: [
     { id: "overview", label: "Overview", icon: LayoutGrid, phase: 1 },
@@ -449,23 +631,23 @@ const NAV_SECTIONS = [
     { id: "tickets", label: "Tickets", icon: TicketIcon, phase: 1 },
   ]},
   { label: "Protect", items: [
-    { id: "patch", label: "Patch Management", icon: ShieldCheck, phase: 2 },
-    { id: "backup", label: "Backup & DR", icon: HardDrive, phase: 2 },
-    { id: "security", label: "Security", icon: ShieldAlert, phase: 2 },
-    { id: "identity", label: "Identity", icon: Fingerprint, phase: 2 },
+    { id: "patch", label: "Patch Management", icon: ShieldCheck, phase: 1, badge: () => PATCH_FINDINGS.filter(p=>p.severity==="Critical").length },
+    { id: "backup", label: "Backup & DR", icon: HardDrive, phase: 1, badge: () => BACKUP_JOBS.filter(b=>b.status==="Failed").length },
+    { id: "security", label: "Security", icon: ShieldAlert, phase: 1, badge: () => SECURITY_FINDINGS.filter(f=>f.severity==="crit").length },
+    { id: "identity", label: "Identity", icon: Fingerprint, phase: 1, badge: () => IDENTITY_USERS.filter(u=>u.risk==="Critical").length },
   ]},
   { label: "Infrastructure", items: [
-    { id: "network", label: "Network", icon: Network, phase: 3 },
-    { id: "cloud", label: "Cloud", icon: Cloud, phase: 3 },
-    { id: "automation", label: "Automation", icon: Cog, phase: 2 },
-    { id: "agents", label: "AI Agents", icon: Users2, phase: 3 },
+    { id: "network", label: "Network", icon: Network, phase: 1, badge: () => NETWORK_SITES.filter(s=>s.status==="warn").length },
+    { id: "cloud", label: "Cloud", icon: Cloud, phase: 1 },
+    { id: "automation", label: "Automation", icon: Cog, phase: 1 },
+    { id: "agents", label: "AI Agents", icon: Users2, phase: 1 },
   ]},
   { label: "Govern", items: [
-    { id: "knowledge", label: "Knowledge", icon: BookOpen, phase: 2 },
-    { id: "compliance", label: "Compliance", icon: ClipboardCheck, phase: 3 },
-    { id: "reports", label: "Reports", icon: FileBarChart, phase: 3 },
-    { id: "integrations", label: "Integrations", icon: Plug, phase: 3 },
-    { id: "settings", label: "Settings", icon: Settings, phase: 3 },
+    { id: "knowledge", label: "Knowledge", icon: BookOpen, phase: 1 },
+    { id: "compliance", label: "Compliance", icon: ClipboardCheck, phase: 1, badge: () => COMPLIANCE_CONTROLS.filter(c=>c.status==="Failed").length },
+    { id: "reports", label: "Reports", icon: FileBarChart, phase: 1 },
+    { id: "integrations", label: "Integrations", icon: Plug, phase: 1, badge: () => INTEGRATIONS.filter(i=>i.status==="Disconnected").length },
+    { id: "settings", label: "Settings", icon: Settings, phase: 1 },
   ]},
 ];
 
@@ -535,10 +717,84 @@ function Pipeline({ activeIndex, blockedIndex=-1 }) {
 }
 
 /* ---------------------------------- TOP BAR ---------------------------------- */
-function TopBar({ nav, approvalCount, onOpenApprovals, aiQuery, setAiQuery, onRunAiQuery }) {
+function useClickOutside(ref, onOutside) {
+  useEffect(()=>{
+    function handler(e){ if (ref.current && !ref.current.contains(e.target)) onOutside(); }
+    document.addEventListener("mousedown", handler);
+    return ()=>document.removeEventListener("mousedown", handler);
+  }, [ref, onOutside]);
+}
+
+function TopBar({
+  approvalCount, onOpenApprovals, aiQuery, setAiQuery, onRunAiQuery,
+  customerFilter, setCustomerFilter, timeRange, setTimeRange,
+  goCustomer, goDevice, goInvestigation, tickets, notify,
+}) {
+  const [openDD, setOpenDD] = useState(null); // 'customer' | 'time' | 'search' | 'notif' | 'user' | null
+  const [searchTerm, setSearchTerm] = useState("");
+  const [readNotifs, setReadNotifs] = useState({});
+  const wrapRef = useRef(null);
+  useClickOutside(wrapRef, ()=>setOpenDD(null));
+
+  const timeOptions = ["Last 24h", "Last 7 days", "Last 30 days"];
+  const unreadCount = NOTIFICATIONS.filter(n=>!readNotifs[n.id]).length;
+
+  const term = searchTerm.trim().toLowerCase();
+  const results = term.length===0 ? null : {
+    customers: CUSTOMERS.filter(c=>c.name.toLowerCase().includes(term)).slice(0,4),
+    devices: DEVICES.filter(d=>d.name.toLowerCase().includes(term) || d.site.toLowerCase().includes(term)).slice(0,4),
+    tickets: tickets.filter(t=>t.subject.toLowerCase().includes(term) || t.id.toLowerCase().includes(term)).slice(0,4),
+    investigations: INVESTIGATIONS.filter(i=>i.title.toLowerCase().includes(term)).slice(0,4),
+  };
+  const hasResults = results && (results.customers.length || results.devices.length || results.tickets.length || results.investigations.length);
+
+  function pick(fn, id) { fn(id); setOpenDD(null); setSearchTerm(""); }
+
   return (
-    <div className="nx-topbar">
-      <div className="nx-search"><Search size={14}/><input placeholder="Search customers, devices, tickets…" /></div>
+    <div className="nx-topbar" ref={wrapRef}>
+      <div className="nx-dd-wrap search-dd">
+        <div className="nx-search" onClick={()=>setOpenDD("search")}>
+          <Search size={14}/>
+          <input
+            placeholder="Search customers, devices, tickets…"
+            value={searchTerm}
+            onChange={e=>{ setSearchTerm(e.target.value); setOpenDD("search"); }}
+            onFocus={()=>setOpenDD("search")}
+          />
+        </div>
+        {openDD==="search" && term.length>0 && (
+          <div className="nx-dd left" style={{width:380}}>
+            <div className="nx-dd-scroll">
+              {!hasResults && <div style={{padding:"14px 12px", fontSize:12, color:"var(--tx-2)"}}>No matches for "{searchTerm}"</div>}
+              {results.customers.length>0 && <div className="search-group-label">Customers</div>}
+              {results.customers.map(c=>(
+                <div className="search-result" key={c.id} onClick={()=>pick(goCustomer, c.id)}>
+                  <span className="r-title">{c.name}</span><span className="r-sub">{c.industry} · Health {c.health}</span>
+                </div>
+              ))}
+              {results.devices.length>0 && <div className="search-group-label">Devices</div>}
+              {results.devices.map(d=>(
+                <div className="search-result" key={d.id} onClick={()=>pick(goDevice, d.id)}>
+                  <span className="r-title nx-mono">{d.name}</span><span className="r-sub">{custName(d.customer)} · {d.site}</span>
+                </div>
+              ))}
+              {results.tickets.length>0 && <div className="search-group-label">Tickets</div>}
+              {results.tickets.map(t=>(
+                <div className="search-result" key={t.id} onClick={()=> t.investigation ? pick(goInvestigation, t.investigation) : setOpenDD(null)}>
+                  <span className="r-title">{t.id} — {t.subject}</span><span className="r-sub">{custName(t.customer)} · {t.status}</span>
+                </div>
+              ))}
+              {results.investigations.length>0 && <div className="search-group-label">AI Investigations</div>}
+              {results.investigations.map(i=>(
+                <div className="search-result" key={i.id} onClick={()=>pick(goInvestigation, i.id)}>
+                  <span className="r-title">{i.title}</span><span className="r-sub">{custName(i.customer)} · {i.confidence}% confidence</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
       <div className="nx-cmdbar">
         <Sparkles size={14} color="#8FB7FF"/>
         <input
@@ -548,15 +804,85 @@ function TopBar({ nav, approvalCount, onOpenApprovals, aiQuery, setAiQuery, onRu
           onKeyDown={e=>{ if(e.key==="Enter") onRunAiQuery(); }}
         />
       </div>
+
       <div className="nx-topbar-right">
-        <div className="nx-pill"><Building2 size={13}/>All Customers<ChevronDown size={12}/></div>
-        <div className="nx-pill"><Clock size={13}/>Last 24h<ChevronDown size={12}/></div>
-        <div className="nx-iconbtn" onClick={onOpenApprovals} title="Approval queue">
-          <ClipboardCheck size={15}/>
-          {approvalCount>0 && <span className="nx-dot">{approvalCount}</span>}
+        <div className="nx-dd-wrap">
+          <div className={`nx-pill ${customerFilter!=="all"?"active":""}`} onClick={()=>setOpenDD(openDD==="customer"?null:"customer")}>
+            <Building2 size={13}/>{customerFilter==="all" ? "All Customers" : custName(customerFilter)}<ChevronDown size={12}/>
+          </div>
+          {openDD==="customer" && (
+            <div className="nx-dd right" style={{width:230}}>
+              <div className="nx-dd-scroll">
+                <div className={`nx-dd-item ${customerFilter==="all"?"selected":""}`} onClick={()=>{ setCustomerFilter("all"); setOpenDD(null); }}>
+                  All Customers {customerFilter==="all" && <CheckCircle2 size={13}/>}
+                </div>
+                {CUSTOMERS.map(c=>(
+                  <div key={c.id} className={`nx-dd-item ${customerFilter===c.id?"selected":""}`} onClick={()=>{ setCustomerFilter(c.id); setOpenDD(null); }}>
+                    {c.name} {customerFilter===c.id && <CheckCircle2 size={13}/>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
-        <div className="nx-iconbtn"><Bell size={15}/><span className="nx-dot">3</span></div>
-        <div className="nx-avatar">AR</div>
+
+        <div className="nx-dd-wrap">
+          <div className="nx-pill" onClick={()=>setOpenDD(openDD==="time"?null:"time")}>
+            <Clock size={13}/>{timeRange}<ChevronDown size={12}/>
+          </div>
+          {openDD==="time" && (
+            <div className="nx-dd right" style={{width:150}}>
+              {timeOptions.map(t=>(
+                <div key={t} className={`nx-dd-item ${timeRange===t?"selected":""}`} onClick={()=>{ setTimeRange(t); setOpenDD(null); }}>
+                  {t} {timeRange===t && <CheckCircle2 size={13}/>}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="nx-dd-wrap">
+          <div className="nx-iconbtn" onClick={onOpenApprovals} title="Approval queue">
+            <ClipboardCheck size={15}/>
+            {approvalCount>0 && <span className="nx-dot">{approvalCount}</span>}
+          </div>
+        </div>
+
+        <div className="nx-dd-wrap">
+          <div className="nx-iconbtn" onClick={()=>setOpenDD(openDD==="notif"?null:"notif")}>
+            <Bell size={15}/>
+            {unreadCount>0 && <span className="nx-dot">{unreadCount}</span>}
+          </div>
+          {openDD==="notif" && (
+            <div className="nx-dd right" style={{width:320}}>
+              <div className="nx-dd-header">Notifications</div>
+              <div className="nx-dd-scroll">
+                {NOTIFICATIONS.map(n=>(
+                  <div className="notif-item" key={n.id} style={{opacity: readNotifs[n.id] ? 0.5 : 1}}
+                    onClick={()=>{ setReadNotifs(r=>({ ...r, [n.id]: true })); if(n.investigation) pick(goInvestigation, n.investigation); else setOpenDD(null); }}>
+                    <span className={`notif-dot dot-status ${n.tone}`}/>
+                    <div>
+                      <div style={{fontSize:12.2}}>{n.text}</div>
+                      <div className="nx-sub" style={{marginTop:2}}>{n.time}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="nx-dd-wrap">
+          <div className="nx-avatar" style={{cursor:"pointer"}} onClick={()=>setOpenDD(openDD==="user"?null:"user")}>AR</div>
+          {openDD==="user" && (
+            <div className="nx-dd right" style={{width:190}}>
+              <div className="nx-dd-header">Alex Rowan · Technician</div>
+              <div className="user-dd-item" onClick={()=>{ notify("Profile settings are read-only in this prototype.", "warn"); setOpenDD(null); }}><Users2 size={13}/>Profile</div>
+              <div className="user-dd-item" onClick={()=>{ setOpenDD(null); }}><Settings size={13}/>Preferences</div>
+              <div className="user-dd-item" onClick={()=>{ notify("Signed out (prototype — no auth backend).", "warn"); setOpenDD(null); }}><X size={13}/>Sign out</div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -596,37 +922,45 @@ function Sidebar({ view, setView, collapsed, setCollapsed }) {
 }
 
 /* ---------------------------------- OVERVIEW ---------------------------------- */
-function Overview({ goInvestigation, setView }) {
-  const critical = INVESTIGATIONS.filter(i=>i.status==="open" && (i.severity==="crit"||i.severity==="att"));
-  const biggestRisk = INVESTIGATIONS.find(i=>i.severity==="crit");
+function Overview({ goInvestigation, setView, customerFilter }) {
+  const scoped = customerFilter==="all" ? INVESTIGATIONS : INVESTIGATIONS.filter(i=>i.customer===customerFilter);
+  const critical = scoped.filter(i=>i.status==="open" && (i.severity==="crit"||i.severity==="att"));
+  const biggestRisk = scoped.find(i=>i.severity==="crit") || scoped[0];
+  const cust = customerFilter==="all" ? null : CUSTOMERS.find(c=>c.id===customerFilter);
+  const categoryToView = { Infra: "monitoring", Security: "security", Backup: "backup", Patch: "patch", Identity: "identity", Network: "network" };
+  const healthBreakdown = cust
+    ? [["Infra", 90],["Security", cust.security],["Backup", cust.backup],["Patch", cust.patch],["Identity", Math.max(cust.security-6,50)],["Network", 92]]
+    : [["Infra",94],["Security",87],["Backup",98],["Patch",92],["Identity",84],["Network",95]];
   return (
     <div className="nx-page">
       <div className="nx-pagehead">
         <div>
-          <div className="nx-h1">Good morning, Alex</div>
-          <div className="nx-sub">Mock Integration Mode — 6 adapters connected · data refreshed 1 min ago</div>
+          <div className="nx-h1">{cust ? `${cust.name} Overview` : "Good morning, Alex"}</div>
+          <div className="nx-sub">{cust ? `Filtered to ${cust.name} · ${cust.industry}` : "Mock Integration Mode — 6 adapters connected · data refreshed 1 min ago"}</div>
         </div>
         <button className="btn primary" onClick={()=>setView("aicc")}><Sparkles size={13}/>Review AI Priorities</button>
       </div>
 
       <div className="nx-grid g-5">
-        <KPI label="Managed Customers" value="24" icon={Building2}/>
-        <KPI label="Devices" value="2,486" icon={Monitor}/>
-        <KPI label="Critical Issues" value="7" icon={AlertTriangle} tone="crit" delta="3 security · 2 backup · 1 infra · 1 network" />
-        <KPI label="Security Risk" value="18 High" icon={ShieldAlert} tone="warn"/>
-        <KPI label="SLA At Risk" value="8" icon={Clock} tone="warn"/>
+        <KPI label="Managed Customers" value={cust ? "1" : "24"} icon={Building2}/>
+        <KPI label="Devices" value={cust ? cust.devices : "2,486"} icon={Monitor}/>
+        <KPI label="Critical Issues" value={critical.length} icon={AlertTriangle} tone={critical.length>0?"crit":"good"}/>
+        <KPI label="Security Risk" value={cust ? `${100-cust.security} Risk pts` : "18 High"} icon={ShieldAlert} tone="warn"/>
+        <KPI label="Open Tickets" value={cust ? cust.openTickets : "126"} icon={TicketIcon} tone="warn"/>
       </div>
 
       <div className="nx-grid g-3" style={{marginTop:12}}>
         <div className="nx-card">
           <div className="ring-wrap">
-            <ScoreRing value={91} size={100}/>
+            <ScoreRing value={cust ? cust.health : 91} size={100}/>
             <div>
-              <div style={{fontWeight:700, fontSize:14}}>MSP Environment Health</div>
-              <div className="nx-sub" style={{marginTop:2}}>Aggregated across 24 customers</div>
+              <div style={{fontWeight:700, fontSize:14}}>{cust ? `${cust.name} Health` : "MSP Environment Health"}</div>
+              <div className="nx-sub" style={{marginTop:2}}>{cust ? "Click a category to drill in" : "Aggregated across 24 customers — click a category to drill in"}</div>
               <div style={{display:"flex", gap:14, marginTop:10, flexWrap:"wrap"}}>
-                {[["Infra",94],["Security",87],["Backup",98],["Patch",92],["Identity",84],["Network",95]].map(([l,v])=>(
-                  <div key={l} style={{fontSize:11}}><span style={{color:"var(--tx-2)"}}>{l} </span><b>{v}</b></div>
+                {healthBreakdown.map(([l,v])=>(
+                  <div key={l} style={{fontSize:11, cursor:"pointer"}} onClick={()=>setView(categoryToView[l])}>
+                    <span style={{color:"var(--tx-2)"}}>{l} </span><b style={{color: v>=90?"#4CDA9E":v>=75?"#F0CB6C":"#FF8992"}}>{Math.round(v)}</b>
+                  </div>
                 ))}
               </div>
             </div>
@@ -640,24 +974,35 @@ function Overview({ goInvestigation, setView }) {
             <div><div className="kpi-value" style={{fontSize:22, color:"#4CDA9E"}}>37</div><div className="nx-sub">Remediated</div></div>
           </div>
         </div>
-        <div className="nx-card" style={{borderColor:"var(--crit)"}}>
-          <div className="kpi-label"><AlertTriangle size={13} color="#FF8992"/>Biggest Risk</div>
-          <div style={{fontWeight:700, fontSize:14, marginTop:2}}>{custName(biggestRisk.customer)}</div>
-          <div className="nx-sub" style={{marginTop:2}}>{biggestRisk.title}</div>
-          <button className="btn sm" style={{marginTop:10}} onClick={()=>goInvestigation(biggestRisk.id)}>Open investigation<ArrowRight size={12}/></button>
-        </div>
+        {biggestRisk ? (
+          <div className="nx-card hover" style={{borderColor:"var(--crit)", cursor:"pointer"}} onClick={()=>goInvestigation(biggestRisk.id)}>
+            <div className="kpi-label"><AlertTriangle size={13} color="#FF8992"/>Biggest Risk</div>
+            <div style={{fontWeight:700, fontSize:14, marginTop:2}}>{custName(biggestRisk.customer)}</div>
+            <div className="nx-sub" style={{marginTop:2}}>{biggestRisk.title}</div>
+            <button className="btn sm" style={{marginTop:10}} onClick={(e)=>{e.stopPropagation(); goInvestigation(biggestRisk.id);}}>Open investigation<ArrowRight size={12}/></button>
+          </div>
+        ) : (
+          <div className="nx-card" style={{borderColor:"var(--good)"}}>
+            <div className="kpi-label"><CheckCircle2 size={13} color="var(--good)"/>Biggest Risk</div>
+            <div style={{fontWeight:700, fontSize:14, marginTop:2}}>None</div>
+            <div className="nx-sub" style={{marginTop:2}}>No open investigations for this scope.</div>
+          </div>
+        )}
       </div>
 
       <div className="nx-card ai-panel" style={{marginTop:14}}>
         <div className="conf-badge"><Bot size={14}/>AI SUMMARY</div>
         <div style={{marginTop:8, fontSize:13, lineHeight:1.6, color:"var(--tx-0)"}}>
-          Infrastructure health is stable overall. Security risk increased 6% in the last 24 hours due to three identity findings.
-          Two production servers require critical patches. Four backup jobs require attention — three at BluePeak Retail share a
-          common repository authentication failure.
+          {cust
+            ? `${cust.name} is trending ${cust.health>=85?"stable":"at risk"} with a health score of ${cust.health}. ${critical.length>0 ? `${critical.length} open investigation${critical.length>1?"s":""} require attention.` : "No active investigations — all monitored systems within expected thresholds."}`
+            : <>Infrastructure health is stable overall. Security risk increased 6% in the last 24 hours due to three identity findings.
+              Two production servers require critical patches. Four backup jobs require attention — three at BluePeak Retail share a
+              common repository authentication failure.</>}
         </div>
       </div>
 
       <div className="section-title">Needs Your Attention <span className="count">{critical.length}</span></div>
+      {critical.length===0 && <div className="nx-card nx-sub">Nothing needs attention in this scope right now.</div>}
       <div className="nx-grid g-2">
         {critical.map(inv=>(
           <div key={inv.id} className="nx-card hover" onClick={()=>goInvestigation(inv.id)}>
@@ -692,11 +1037,12 @@ function Overview({ goInvestigation, setView }) {
 }
 
 /* ---------------------------------- AI COMMAND CENTER ---------------------------------- */
-function AICommandCenter({ goInvestigation, aiResult }) {
+function AICommandCenter({ goInvestigation, aiResult, customerFilter }) {
+  const list = customerFilter==="all" ? INVESTIGATIONS : INVESTIGATIONS.filter(i=>i.customer===customerFilter);
   return (
     <div className="nx-page">
       <div className="nx-pagehead">
-        <div><div className="nx-h1">AI Operations Center</div><div className="nx-sub">Correlated investigations across all customers, ranked by confidence and business impact</div></div>
+        <div><div className="nx-h1">AI Operations Center</div><div className="nx-sub">{customerFilter==="all" ? "Correlated investigations across all customers, ranked by confidence and business impact" : `Filtered to ${custName(customerFilter)}`}</div></div>
       </div>
 
       {aiResult && (
@@ -715,8 +1061,9 @@ function AICommandCenter({ goInvestigation, aiResult }) {
         </div>
       )}
 
+      {list.length===0 && <div className="nx-card nx-sub">No active investigations for this customer.</div>}
       <div className="nx-grid g-2">
-        {INVESTIGATIONS.map(inv=>(
+        {list.map(inv=>(
           <div key={inv.id} className="nx-card hover" onClick={()=>goInvestigation(inv.id)}>
             <div style={{display:"flex", justifyContent:"space-between", alignItems:"flex-start"}}>
               <div style={{display:"flex", gap:6, alignItems:"center"}}>
@@ -1005,9 +1352,10 @@ function DeviceTable({ devices, onOpen }) {
     </div>
   );
 }
-function Devices({ goDevice }) {
+function Devices({ goDevice, customerFilter }) {
   const [filter, setFilter] = useState("all");
   const filtered = DEVICES.filter(d=>{
+    if (customerFilter!=="all" && d.customer!==customerFilter) return false;
     if(filter==="all") return true;
     if(filter==="critical") return d.status==="critical";
     if(filter==="patch") return d.patch!=="up to date";
@@ -1016,32 +1364,47 @@ function Devices({ goDevice }) {
   });
   return (
     <div className="nx-page">
-      <div className="nx-pagehead"><div><div className="nx-h1">Devices</div><div className="nx-sub">2,486 devices under management · showing prototype dataset</div></div></div>
+      <div className="nx-pagehead"><div><div className="nx-h1">Devices</div><div className="nx-sub">{customerFilter==="all" ? "2,486 devices under management · showing prototype dataset" : `Filtered to ${custName(customerFilter)}`}</div></div></div>
       <div style={{display:"flex", gap:8, marginBottom:14}}>
         {[["all","All"],["critical","Critical"],["patch","Patch overdue"],["backup","Backup issue"]].map(([k,l])=>(
           <div key={k} className="nx-pill" style={{background: filter===k?"var(--ai-soft)":"var(--bg-2)", borderColor: filter===k?"var(--ai-line)":"var(--line)", color: filter===k?"#BFD5FF":"var(--tx-1)"}} onClick={()=>setFilter(k)}>{l}</div>
         ))}
       </div>
+      {filtered.length===0 && <div className="nx-card nx-sub">No devices match this filter.</div>}
       <DeviceTable devices={filtered} onOpen={goDevice}/>
     </div>
   );
 }
 
-function DeviceDetail({ device, setView, goInvestigation }) {
+function DeviceDetail({ device, setView, goInvestigation, notify }) {
   const [tab, setTab] = useState("monitoring");
+  const [serviceState, setServiceState] = useState(null);
+  const [pendingAction, setPendingAction] = useState(null); // {name, action}
   if (!device) return null;
   const relatedInv = INVESTIGATIONS.find(i=>i.device===device.id);
-  const services = [
+  const baseServices = [
     { name: "MSSQLSERVER", status: "Running" }, { name: "SQLSERVERAGENT", status: "Running" },
     { name: "W3SVC", status: "Running" }, { name: "Spooler", status: "Stopped" },
     { name: "WinDefend", status: "Running" }, { name: "VeeamBackupSvc", status: device.backup==="failed"?"Error":"Running" },
   ];
+  const services = serviceState || baseServices;
   const events = [
     { time: "02:14:08", level: "Error", src: "VSS", msg: "Backup job failed — volume shadow copy timeout (0x8007007A)" },
     { time: "01:58:41", level: "Warning", src: "MSSQLSERVER", msg: "Transaction log for database 'ACME_ERP' is 92% full" },
     { time: "01:40:12", level: "Warning", src: "Disk", msg: "Free space on C:\\ below 10% threshold" },
     { time: "00:12:03", level: "Info", src: "System", msg: "Scheduled maintenance script completed" },
   ];
+  function applyAction(name, action) {
+    setPendingAction({ name, action });
+    setTimeout(()=>{
+      setServiceState(prev=>{
+        const base = prev || baseServices;
+        return base.map(s=> s.name===name ? { ...s, status: action==="Restart" ? "Running" : "Stopped" } : s);
+      });
+      setPendingAction(null);
+      notify(`${name} ${action==="Restart" ? "restarted successfully" : "stopped"} on ${device.name}.`, "good");
+    }, 900);
+  }
   return (
     <div className="nx-page">
       <div className="nx-breadcrumb"><span className="bc-link" onClick={()=>setView("devices")}>Devices</span><ChevronRight size={11}/><span>{device.name}</span></div>
@@ -1081,16 +1444,23 @@ function DeviceDetail({ device, setView, goInvestigation }) {
           <table className="nx-table">
             <thead><tr><th>Service</th><th>Status</th><th>Actions</th></tr></thead>
             <tbody>
-              {services.map(s=>(
-                <tr key={s.name}>
-                  <td className="nx-mono">{s.name}</td>
-                  <td>{s.status==="Running" ? <Chip tone="good">Running</Chip> : s.status==="Error" ? <Chip tone="crit">Error</Chip> : <Chip tone="neutral">Stopped</Chip>}</td>
-                  <td style={{display:"flex", gap:6}}>
-                    <button className="btn sm"><RotateCw size={11}/>Restart</button>
-                    <button className="btn sm ghost"><PauseCircle size={11}/>Stop</button>
-                  </td>
-                </tr>
-              ))}
+              {services.map(s=>{
+                const busy = pendingAction && pendingAction.name===s.name;
+                return (
+                  <tr key={s.name}>
+                    <td className="nx-mono">{s.name}</td>
+                    <td>{s.status==="Running" ? <Chip tone="good">Running</Chip> : s.status==="Error" ? <Chip tone="crit">Error</Chip> : <Chip tone="neutral">Stopped</Chip>}</td>
+                    <td style={{display:"flex", gap:6}}>
+                      <button className="btn sm" disabled={busy} onClick={()=>applyAction(s.name,"Restart")}>
+                        {busy && pendingAction.action==="Restart" ? <Loader2 size={11} className="spin"/> : <RotateCw size={11}/>}Restart
+                      </button>
+                      <button className="btn sm ghost" disabled={busy} onClick={()=>applyAction(s.name,"Stop")}>
+                        {busy && pendingAction.action==="Stop" ? <Loader2 size={11} className="spin"/> : <PauseCircle size={11}/>}Stop
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -1155,16 +1525,621 @@ function MonitoringPage() {
   );
 }
 
-/* ---------------------------------- INCIDENTS ---------------------------------- */
-function Incidents({ goInvestigation }) {
+/* ---------------------------------- GENERIC WORKFLOW STEPPER ---------------------------------- */
+function StageStepper({ stages, activeIndex }) {
+  return (
+    <div className="pipeline">
+      {stages.map((s,i)=>{
+        const state = i < activeIndex ? "done" : i===activeIndex ? "active" : "";
+        return (
+          <div className="pipe-step" key={s}>
+            <div className={`pipe-line ${i<=activeIndex ? "done":""}`} />
+            <div className={`pipe-node ${state}`}>
+              {state==="done" ? <CheckCircle2 size={14}/> : i===activeIndex ? <Loader2 size={14} className="spin"/> : <Circle size={8}/>}
+            </div>
+            <div className={`pipe-label ${state==="active"?"active":""}`}>{s}</div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/* ---------------------------------- PATCH MANAGEMENT ---------------------------------- */
+function PatchManagement({ goInvestigation }) {
+  const [deploying, setDeploying] = useState({}); // findingId -> stageIndex
+  const stages = ["Plan","Approval","Deploy","Reboot","Health Check","Verify"];
+  const critical = PATCH_FINDINGS.filter(p=>p.severity==="Critical").length;
+  const totalAffected = PATCH_FINDINGS.reduce((s,p)=>s+p.affected,0);
+  const compliance = 88;
+
+  function runDeploy(finding) {
+    setDeploying(d=>({ ...d, [finding.id]: 0 }));
+    stages.forEach((_,i)=>{
+      setTimeout(()=> setDeploying(d=> d[finding.id]===undefined ? d : { ...d, [finding.id]: i }), 500 + i*550);
+    });
+  }
+
   return (
     <div className="nx-page">
-      <div className="nx-pagehead"><div><div className="nx-h1">Incidents</div><div className="nx-sub">AI-correlated incidents ranked by severity — click to open the full investigation</div></div></div>
+      <div className="nx-pagehead">
+        <div><div className="nx-h1">Patch Management Center</div><div className="nx-sub">AI prioritizes patches by exploitability, exposure, and backup readiness — not just CVSS score</div></div>
+      </div>
+      <div className="nx-grid g-4">
+        <KPI label="Overall Compliance" value={`${compliance}%`} icon={ShieldCheck} tone={compliance>=90?"good":"warn"}/>
+        <KPI label="Critical Patches" value={critical} icon={AlertTriangle} tone="crit"/>
+        <KPI label="Affected Devices" value={totalAffected} icon={Monitor}/>
+        <KPI label="Reboot Required" value="6" icon={RotateCw} tone="warn"/>
+      </div>
+
+      <div className="section-title">AI Patch Prioritization <span className="count">{PATCH_FINDINGS.length}</span></div>
+      <div style={{display:"flex", flexDirection:"column", gap:12}}>
+        {PATCH_FINDINGS.map(p=>{
+          const stageIndex = deploying[p.id];
+          const done = stageIndex >= stages.length-1;
+          return (
+            <div className="nx-card" key={p.id}>
+              <div style={{display:"flex", justifyContent:"space-between", alignItems:"flex-start", flexWrap:"wrap", gap:10}}>
+                <div style={{display:"flex", gap:10, alignItems:"center"}}>
+                  <Chip tone={p.severity==="Critical"?"crit":p.severity==="High"?"att":"warn"}>{p.severity}</Chip>
+                  <span className="nx-mono" style={{fontWeight:700, fontSize:13}}>{p.cve}</span>
+                  {p.exploited && <Chip tone="crit" icon={ShieldAlert}>Actively exploited</Chip>}
+                </div>
+                <span className="nx-sub nx-mono">CVSS {p.cvss}</span>
+              </div>
+              <div style={{display:"flex", gap:22, flexWrap:"wrap", marginTop:12, fontSize:12}}>
+                <span><span className="nx-sub">Customer </span><b>{custName(p.customer)}</b></span>
+                <span><span className="nx-sub">Affected </span><b>{p.affected} devices</b></span>
+                <span><span className="nx-sub">Exposure </span><b>{p.exposure}</b></span>
+                <span><span className="nx-sub">Importance </span><b>{p.businessImportance}</b></span>
+                <span><span className="nx-sub">Compatibility </span><b>{p.compatible ? "Verified" : "Unverified"}</b></span>
+              </div>
+              <div style={{marginTop:10, padding:"9px 12px", background:"var(--bg-2)", borderRadius:8, fontSize:12.4, display:"flex", alignItems:"center", gap:7}}>
+                <Sparkles size={13} color="#8FB7FF"/><b>AI recommendation:</b> {p.recommendation}
+              </div>
+              {stageIndex !== undefined && (
+                <div style={{marginTop:14}}>
+                  <StageStepper stages={stages} activeIndex={stageIndex}/>
+                  {done && <div className="chip good" style={{marginTop:8, width:"fit-content"}}><CheckCircle2 size={11}/>Patch deployed and health-verified on {p.affected} device(s)</div>}
+                </div>
+              )}
+              <div style={{display:"flex", gap:8, marginTop:12}}>
+                {stageIndex===undefined && <button className="btn primary sm" onClick={()=>runDeploy(p)}><PlayCircle size={12}/>{p.recommendation.startsWith("Deploy") ? "Deploy Now" : "Schedule & Deploy"}</button>}
+                {p.investigation && <button className="btn sm ghost" onClick={()=>goInvestigation(p.investigation)}><Bot size={12}/>View AI Investigation</button>}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/* ---------------------------------- BACKUP & DR ---------------------------------- */
+function BackupDR({ goInvestigation }) {
+  const [restoreTests, setRestoreTests] = useState({}); // jobId -> stageIndex
+  const stages = ["Backup selected","Restore started","VM boot test","App health check","Database test","Recovery verified"];
+  const failed = BACKUP_JOBS.filter(b=>b.status==="Failed");
+  const success = BACKUP_JOBS.filter(b=>b.status==="Success");
+  const relatedInv = INVESTIGATIONS.find(i=>i.category==="Backup");
+
+  function runRestoreTest(job) {
+    setRestoreTests(t=>({ ...t, [job.id]: 0 }));
+    stages.forEach((_,i)=>{
+      setTimeout(()=> setRestoreTests(t=> t[job.id]===undefined ? t : { ...t, [job.id]: i }), 450 + i*500);
+    });
+  }
+
+  return (
+    <div className="nx-page">
+      <div className="nx-pagehead">
+        <div><div className="nx-h1">Backup & DR Center</div><div className="nx-sub">Protected devices, backup health, and simulated recovery verification</div></div>
+      </div>
+      <div className="nx-grid g-4">
+        <KPI label="Protected Devices" value={BACKUP_JOBS.length} icon={HardDrive}/>
+        <KPI label="Successful Backups" value={success.length} icon={CheckCircle2} tone="good"/>
+        <KPI label="Failed Backups" value={failed.length} icon={AlertTriangle} tone="crit"/>
+        <KPI label="Avg Recovery Confidence" value="96%" icon={ShieldCheck} tone="good"/>
+      </div>
+
+      {failed.length>0 && (
+        <div className="nx-card ai-panel" style={{marginTop:4}}>
+          <div className="conf-badge"><Bot size={13}/>AI BACKUP ANALYSIS</div>
+          <div style={{marginTop:8, fontSize:12.8, lineHeight:1.6}}>
+            {failed.length} jobs are failing with the same <code className="nx-mono">AUTH_TOKEN_EXPIRED</code> / VSS timeout pattern.
+            The three BluePeak Retail failures share one repository and one expired token timestamp — a single reconnect
+            likely resolves all three at once, rather than three independent faults.
+          </div>
+          {relatedInv && <button className="btn sm" style={{marginTop:10}} onClick={()=>goInvestigation(relatedInv.id)}><Bot size={12}/>Open linked investigation</button>}
+        </div>
+      )}
+
+      <div className="section-title">Backup Jobs <span className="count">{BACKUP_JOBS.length}</span></div>
+      <div className="nx-card" style={{padding:0}}>
+        <table className="nx-table">
+          <thead><tr><th>Device</th><th>Customer</th><th>Repository</th><th>Last Run</th><th>Status</th><th>Error</th><th>RPO</th><th>Restore Test</th><th></th></tr></thead>
+          <tbody>
+            {BACKUP_JOBS.map(b=>(
+              <tr key={b.id}>
+                <td className="nx-mono" style={{fontSize:12}}>{deviceName(b.device) || b.device}</td>
+                <td>{custName(b.customer)}</td>
+                <td className="nx-sub">{b.repo}</td>
+                <td className="nx-sub">{b.lastRun}</td>
+                <td>{b.status==="Success" ? <Chip tone="good">Success</Chip> : <Chip tone="crit">Failed</Chip>}</td>
+                <td className="nx-mono" style={{fontSize:11, color:"var(--tx-2)"}}>{b.errorCode}</td>
+                <td className={b.rpo.includes("breached") ? "" : "nx-sub"} style={b.rpo.includes("breached") ? {color:"#FF8992"} : {}}>{b.rpo}</td>
+                <td className="nx-sub">{b.restoreTest}</td>
+                <td><button className="btn sm ghost" onClick={()=>runRestoreTest(b)} disabled={restoreTests[b.id]!==undefined}><PlayCircle size={11}/>Test Restore</button></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {Object.entries(restoreTests).map(([jobId, stageIndex])=>{
+        const job = BACKUP_JOBS.find(b=>b.id===jobId);
+        if (!job) return null;
+        const done = stageIndex >= stages.length-1;
+        return (
+          <div className="nx-card" key={jobId} style={{marginTop:12}}>
+            <div className="kpi-label"><History size={13}/>Test Restore — {deviceName(job.device) || job.device}</div>
+            <StageStepper stages={stages} activeIndex={stageIndex}/>
+            {done && (
+              <div style={{display:"flex", alignItems:"center", gap:10, marginTop:10}}>
+                <Chip tone="good" icon={CheckCircle2}>Recovery Confidence: 96%</Chip>
+                <span className="nx-sub">All application and database checks passed on the restored instance.</span>
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/* ---------------------------------- SECURITY ---------------------------------- */
+function SecurityCenter({ goInvestigation }) {
+  const critCount = SECURITY_FINDINGS.filter(f=>f.severity==="crit").length;
+  const avgScore = Math.round(CUSTOMERS.reduce((s,c)=>s+c.security,0)/CUSTOMERS.length);
+  return (
+    <div className="nx-page">
+      <div className="nx-pagehead"><div><div className="nx-h1">Security Operations Center</div><div className="nx-sub">Correlated identity, endpoint, and network security signals across all customers</div></div></div>
+      <div className="nx-grid g-4">
+        <KPI label="Avg Security Score" value={avgScore} icon={ShieldAlert} tone={avgScore>=85?"good":"warn"}/>
+        <KPI label="Critical Findings" value={critCount} icon={AlertTriangle} tone="crit"/>
+        <KPI label="Risky Users" value={IDENTITY_USERS.filter(u=>u.risk!=="Low").length} icon={Fingerprint} tone="warn"/>
+        <KPI label="Unmanaged Devices" value="3" icon={Monitor} tone="warn"/>
+      </div>
+      <div className="section-title">Security Findings <span className="count">{SECURITY_FINDINGS.length}</span></div>
+      <div style={{display:"flex", flexDirection:"column", gap:10}}>
+        {SECURITY_FINDINGS.map(f=>(
+          <div className="nx-card" key={f.id} style={f.investigation ? {cursor:"pointer"} : {}} onClick={()=> f.investigation && goInvestigation(f.investigation)}>
+            <div style={{display:"flex", justifyContent:"space-between", alignItems:"flex-start", flexWrap:"wrap", gap:8}}>
+              <div style={{display:"flex", gap:8, alignItems:"center"}}>
+                <Chip tone={sevColor(f.severity)}>{f.severity==="crit"?"Critical":f.severity==="att"?"Attention":"Warning"}</Chip>
+                <span style={{fontWeight:700, fontSize:13}}>{f.title}</span>
+              </div>
+              <span className="nx-sub nx-mono">{f.confidence}% confidence</span>
+            </div>
+            <div style={{display:"flex", gap:20, marginTop:10, fontSize:12, flexWrap:"wrap"}}>
+              <span><span className="nx-sub">Source </span><b>{f.source}</b></span>
+              <span><span className="nx-sub">Customer </span><b>{custName(f.customer)}</b></span>
+              <span><span className="nx-sub">Asset </span><b className="nx-mono">{f.asset}</b></span>
+              <span><span className="nx-sub">First seen </span><b>{f.firstSeen}</b></span>
+            </div>
+            {f.investigation && <div style={{marginTop:8, color:"var(--ai)", fontSize:12, fontWeight:700, display:"flex", alignItems:"center", gap:4}}><Bot size={12}/>View correlated AI investigation<ArrowRight size={11}/></div>}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ---------------------------------- IDENTITY ---------------------------------- */
+function IdentitySecurity({ goInvestigation }) {
+  const mfaCoverage = Math.round(100*IDENTITY_USERS.filter(u=>u.mfa==="Enforced").length/IDENTITY_USERS.length);
+  const risky = IDENTITY_USERS.filter(u=>u.risk!=="Low");
+  const idInv = INVESTIGATIONS.find(i=>i.category==="Identity");
+  return (
+    <div className="nx-page">
+      <div className="nx-pagehead"><div><div className="nx-h1">Identity Security</div><div className="nx-sub">Users, roles, MFA coverage, and privileged-account audit across Microsoft Entra ID</div></div></div>
+      <div className="nx-grid g-4">
+        <KPI label="Users Monitored" value={IDENTITY_USERS.length} icon={Users2}/>
+        <KPI label="MFA Coverage" value={`${mfaCoverage}%`} icon={Lock} tone={mfaCoverage>=90?"good":"warn"}/>
+        <KPI label="Privileged Accounts" value={IDENTITY_USERS.filter(u=>u.role.includes("Administrator")).length} icon={Fingerprint}/>
+        <KPI label="Risky Accounts" value={risky.length} icon={ShieldAlert} tone="crit"/>
+      </div>
+      {idInv && (
+        <div className="nx-card ai-panel hover" onClick={()=>goInvestigation(idInv.id)} style={{marginBottom:16, cursor:"pointer"}}>
+          <div className="conf-badge"><Bot size={13}/>AI FINDING — {idInv.confidence}% confidence</div>
+          <div style={{fontWeight:700, fontSize:13.5, marginTop:6}}>{idInv.title}</div>
+          <div style={{fontSize:12.4, color:"var(--tx-1)", marginTop:6}}>{idInv.summary}</div>
+        </div>
+      )}
+      <div className="section-title">Users <span className="count">{IDENTITY_USERS.length}</span></div>
+      <div className="nx-card" style={{padding:0}}>
+        <table className="nx-table">
+          <thead><tr><th>User</th><th>Customer</th><th>Role</th><th>Last Sign-in</th><th>MFA</th><th>Risk</th></tr></thead>
+          <tbody>
+            {IDENTITY_USERS.map(u=>(
+              <tr key={u.email}>
+                <td><div style={{fontWeight:600}}>{u.name}</div><div className="nx-sub nx-mono" style={{fontSize:11}}>{u.email}</div></td>
+                <td>{custName(u.customer)}</td>
+                <td>{u.role}</td>
+                <td className="nx-sub">{u.lastSignIn}</td>
+                <td>{u.mfa==="Enforced" ? <Chip tone="good">Enforced</Chip> : u.mfa==="Not enrolled" ? <Chip tone="warn">Not enrolled</Chip> : <Chip tone="att">Unused</Chip>}</td>
+                <td><Chip tone={u.risk==="Critical"?"crit":u.risk==="Medium"?"warn":"good"}>{u.risk}</Chip></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+/* ---------------------------------- NETWORK ---------------------------------- */
+function NetworkOps({ goInvestigation }) {
+  const netInv = INVESTIGATIONS.find(i=>i.category==="Network");
+  return (
+    <div className="nx-page">
+      <div className="nx-pagehead"><div><div className="nx-h1">Network Operations Center</div><div className="nx-sub">WAN latency, packet loss, and bandwidth across all managed sites</div></div></div>
+      <div className="nx-grid g-4">
+        <KPI label="Sites Monitored" value={NETWORK_SITES.length} icon={MapPin}/>
+        <KPI label="Sites With Anomalies" value={NETWORK_SITES.filter(s=>s.status==="warn").length} icon={AlertTriangle} tone="warn"/>
+        <KPI label="Avg Bandwidth Utilization" value={`${Math.round(NETWORK_SITES.reduce((s,x)=>s+x.bandwidthUtil,0)/NETWORK_SITES.length)}%`} icon={Wifi}/>
+        <KPI label="Firewalls Connected" value={DEVICES.filter(d=>d.type==="Firewall").length} icon={ShieldCheck}/>
+      </div>
+      <div className="section-title">Sites <span className="count">{NETWORK_SITES.length}</span></div>
+      <div className="nx-card" style={{padding:0}}>
+        <table className="nx-table">
+          <thead><tr><th>Site</th><th>Customer</th><th>Latency (baseline → current)</th><th>Packet Loss</th><th>Bandwidth</th><th>Status</th></tr></thead>
+          <tbody>
+            {NETWORK_SITES.map(s=>(
+              <tr key={s.site} className={s.status==="warn" && netInv ? "clickable" : ""} onClick={()=> s.status==="warn" && netInv && goInvestigation(netInv.id)}>
+                <td style={{fontWeight:600}}>{s.site}</td>
+                <td>{custName(s.customer)}</td>
+                <td className="nx-mono">{s.latencyBaseline}ms → <span style={{color: s.latencyCurrent>s.latencyBaseline*1.5?"#FF8992":"var(--tx-0)"}}>{s.latencyCurrent}ms</span></td>
+                <td className="nx-mono">{s.packetLoss}%</td>
+                <td style={{width:120}}><Bar pct={s.bandwidthUtil} tone={s.bandwidthUtil>80?"warn":"ai"}/></td>
+                <td>{s.status==="warn" ? <Chip tone="warn">Anomaly</Chip> : <Chip tone="good">Healthy</Chip>}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+/* ---------------------------------- CLOUD ---------------------------------- */
+function CloudOps() {
+  const flagged = CLOUD_RESOURCES.filter(r=>r.flag);
+  return (
+    <div className="nx-page">
+      <div className="nx-pagehead"><div><div className="nx-h1">Cloud Operations</div><div className="nx-sub">Azure, AWS, and GCP resources — AI flags idle, exposed, or anomalous configurations</div></div></div>
+      <div className="nx-grid g-4">
+        <KPI label="Resources Tracked" value={CLOUD_RESOURCES.length} icon={Cloud}/>
+        <KPI label="Monthly Cloud Spend" value={`$${CLOUD_RESOURCES.reduce((s,r)=>s+r.costMonth,0).toLocaleString()}`} icon={FileBarChart}/>
+        <KPI label="Flagged Resources" value={flagged.length} icon={AlertTriangle} tone="warn"/>
+        <KPI label="Publicly Exposed" value={CLOUD_RESOURCES.filter(r=>r.publicExposure).length} icon={ShieldAlert} tone="crit"/>
+      </div>
+      <div className="nx-card" style={{padding:0}}>
+        <table className="nx-table">
+          <thead><tr><th>Resource</th><th>Customer</th><th>Provider</th><th>Type</th><th>Region</th><th>CPU Avg</th><th>Cost/mo</th><th>AI Flag</th></tr></thead>
+          <tbody>
+            {CLOUD_RESOURCES.map(r=>(
+              <tr key={r.name}>
+                <td className="nx-mono" style={{fontSize:12}}>{r.name}</td>
+                <td>{custName(r.customer)}</td>
+                <td>{r.provider}</td>
+                <td>{r.type}</td>
+                <td className="nx-sub">{r.region}</td>
+                <td>{r.cpuAvg!==null ? `${r.cpuAvg}%` : "—"}</td>
+                <td className="nx-mono">${r.costMonth}</td>
+                <td>{r.flag ? <Chip tone="warn" icon={Sparkles}>{r.flag}</Chip> : <Chip tone="good">None</Chip>}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+/* ---------------------------------- AUTOMATION ---------------------------------- */
+function AutomationCenter() {
+  const byRisk = { Safe: AUTOMATIONS.filter(a=>a.risk==="Safe").length, Medium: AUTOMATIONS.filter(a=>a.risk==="Medium").length, High: AUTOMATIONS.filter(a=>a.risk==="High").length };
+  return (
+    <div className="nx-page">
+      <div className="nx-pagehead"><div><div className="nx-h1">Automation Marketplace</div><div className="nx-sub">Every automation NEXUS can run, its risk tier, and policy requirement</div></div></div>
+      <div className="nx-grid g-4">
+        <KPI label="Total Automations" value={AUTOMATIONS.length} icon={Cog}/>
+        <KPI label="Safe (Auto-approve)" value={byRisk.Safe} icon={CheckCircle2} tone="good"/>
+        <KPI label="Medium (Approval req.)" value={byRisk.Medium} icon={ClipboardCheck} tone="warn"/>
+        <KPI label="High (Never autonomous)" value={byRisk.High} icon={ShieldAlert} tone="crit"/>
+      </div>
+      <div className="nx-card" style={{padding:0}}>
+        <table className="nx-table">
+          <thead><tr><th>Automation</th><th>Category</th><th>Risk</th><th>Policy</th><th>Success Rate</th><th>Executions (30d)</th></tr></thead>
+          <tbody>
+            {AUTOMATIONS.map(a=>(
+              <tr key={a.name}>
+                <td style={{fontWeight:600}}>{a.name}</td>
+                <td className="nx-sub">{a.category}</td>
+                <td><Chip tone={a.risk==="Safe"?"good":a.risk==="Medium"?"warn":"crit"}>{a.risk}</Chip></td>
+                <td className="nx-sub">{a.approval}</td>
+                <td>{a.success!==null ? `${a.success}%` : "—"}</td>
+                <td className="nx-mono">{a.runs}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+/* ---------------------------------- AI AGENTS ---------------------------------- */
+function AIAgentsPage() {
+  return (
+    <div className="nx-page">
+      <div className="nx-pagehead"><div><div className="nx-h1">AI Agents</div><div className="nx-sub">Purpose-built agents, each scoped to least-privilege tools and a defined risk level</div></div></div>
+      <div className="nx-grid g-2">
+        {AGENTS.map(a=>(
+          <div className="nx-card" key={a.name}>
+            <div style={{display:"flex", justifyContent:"space-between", alignItems:"flex-start"}}>
+              <div style={{fontWeight:700, fontSize:13.5, display:"flex", alignItems:"center", gap:7}}><Users2 size={14}/>{a.name}</div>
+              {a.status==="Active" ? <Chip tone="good">Active</Chip> : <Chip tone="neutral">Idle</Chip>}
+            </div>
+            <div style={{fontSize:12.3, color:"var(--tx-1)", marginTop:8, lineHeight:1.5}}>{a.desc}</div>
+            <div style={{display:"flex", gap:6, flexWrap:"wrap", marginTop:10}}>
+              {a.tools.map(t=><span key={t} className="chip neutral nx-mono">{t}()</span>)}
+            </div>
+            <div style={{display:"flex", justifyContent:"space-between", marginTop:12, paddingTop:10, borderTop:"1px solid var(--line-soft)", fontSize:11.5}}>
+              <span className="nx-sub">Risk: <b style={{color:"var(--tx-0)"}}>{a.risk}</b></span>
+              <span className="nx-sub">{a.actionsToday} actions today</span>
+              <span className="nx-sub">{a.lastActivity}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ---------------------------------- KNOWLEDGE ---------------------------------- */
+function KnowledgeCenter() {
+  return (
+    <div className="nx-page">
+      <div className="nx-pagehead"><div><div className="nx-h1">Knowledge Center</div><div className="nx-sub">RAG-indexed SOPs, past tickets, and vendor docs — AI answers always cite sources</div></div></div>
+      <div className="nx-card ai-panel" style={{marginBottom:16}}>
+        <div className="conf-badge"><Terminal size={13}/>EXAMPLE — "Why does ACME-SQL01 keep failing backups?"</div>
+        <div style={{marginTop:8, fontSize:12.8, lineHeight:1.6}}>
+          Transaction log growth has preceded backup failure on this server twice before, both resolved by clearing the log after a verified full backup. Current disk pressure matches that pattern.
+        </div>
+        <div style={{marginTop:10, display:"flex", gap:8, flexWrap:"wrap"}}>
+          {["KB-102","TCK-3201","AI-DOC-041"].map(s=><span key={s} className="chip ai nx-mono">{s}</span>)}
+        </div>
+      </div>
+      <div className="section-title">Articles <span className="count">{KNOWLEDGE_ARTICLES.length}</span></div>
+      <div className="nx-card" style={{padding:0}}>
+        <table className="nx-table">
+          <thead><tr><th>ID</th><th>Title</th><th>Source</th><th>Customer</th><th>Updated</th></tr></thead>
+          <tbody>
+            {KNOWLEDGE_ARTICLES.map(k=>(
+              <tr key={k.id}>
+                <td className="nx-mono">{k.id}</td>
+                <td style={{fontWeight:600}}>{k.title}</td>
+                <td><Chip tone={k.source==="AI-generated"?"ai":"neutral"}>{k.source}</Chip></td>
+                <td>{k.customer==="Global" ? "Global" : custName(k.customer)}</td>
+                <td className="nx-sub">{k.updated}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+/* ---------------------------------- COMPLIANCE ---------------------------------- */
+function ComplianceCenter() {
+  const frameworks = ["CIS","ISO 27001","SOC 2","NIST","GDPR","HIPAA"];
+  const [fw, setFw] = useState("CIS");
+  const controls = COMPLIANCE_CONTROLS.filter(c=>c.frameworks.includes(fw));
+  const passed = controls.filter(c=>c.status==="Passed").length;
+  return (
+    <div className="nx-page">
+      <div className="nx-pagehead"><div><div className="nx-h1">Compliance</div><div className="nx-sub">Technical control status only — not a certification or legal compliance claim</div></div></div>
+      <div style={{display:"flex", gap:8, marginBottom:16, flexWrap:"wrap"}}>
+        {frameworks.map(f=>(
+          <div key={f} className="nx-pill" style={{background: fw===f?"var(--ai-soft)":"var(--bg-2)", borderColor: fw===f?"var(--ai-line)":"var(--line)", color: fw===f?"#BFD5FF":"var(--tx-1)"}} onClick={()=>setFw(f)}>{f}</div>
+        ))}
+      </div>
+      <div className="nx-grid g-3" style={{marginBottom:16}}>
+        <KPI label="Controls Passed" value={`${passed}/${controls.length}`} icon={CheckCircle2} tone="good"/>
+        <KPI label="Partial" value={controls.filter(c=>c.status==="Partial").length} icon={Clock} tone="warn"/>
+        <KPI label="Failed" value={controls.filter(c=>c.status==="Failed").length} icon={AlertTriangle} tone="crit"/>
+      </div>
+      <div className="nx-card" style={{padding:0}}>
+        <table className="nx-table">
+          <thead><tr><th>Control</th><th>Status</th><th>Evidence</th></tr></thead>
+          <tbody>
+            {controls.map(c=>(
+              <tr key={c.control}>
+                <td style={{fontWeight:600}}>{c.control}</td>
+                <td>{c.status==="Passed" ? <Chip tone="good">Passed</Chip> : c.status==="Partial" ? <Chip tone="warn">Partial</Chip> : <Chip tone="crit">Failed</Chip>}</td>
+                <td className="nx-sub">{c.evidence}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+/* ---------------------------------- REPORTS ---------------------------------- */
+function ReportsPage() {
+  const [selected, setSelected] = useState(CUSTOMERS[0].id);
+  const c = CUSTOMERS.find(x=>x.id===selected);
+  const invs = INVESTIGATIONS.filter(i=>i.customer===c.id);
+  return (
+    <div className="nx-page">
+      <div className="nx-pagehead"><div><div className="nx-h1">Executive Reports</div><div className="nx-sub">Client-facing monthly IT health reports</div></div></div>
+      <div style={{display:"flex", gap:8, marginBottom:16, flexWrap:"wrap"}}>
+        {CUSTOMERS.map(cust=>(
+          <div key={cust.id} className="nx-pill" style={{background: selected===cust.id?"var(--ai-soft)":"var(--bg-2)", borderColor: selected===cust.id?"var(--ai-line)":"var(--line)", color: selected===cust.id?"#BFD5FF":"var(--tx-1)"}} onClick={()=>setSelected(cust.id)}>{cust.name}</div>
+        ))}
+      </div>
+      <div className="nx-card">
+        <div style={{display:"flex", justifyContent:"space-between", alignItems:"flex-start"}}>
+          <div>
+            <div className="nx-sub">Monthly IT Health Report</div>
+            <div style={{fontWeight:700, fontSize:17, marginTop:2}}>{c.name}</div>
+          </div>
+          <ScoreRing value={c.health} size={80}/>
+        </div>
+        <div className="nx-grid g-3" style={{marginTop:16}}>
+          <MiniStat label="Security" value={c.security}/>
+          <MiniStat label="Backup" value={c.backup}/>
+          <MiniStat label="Patch" value={c.patch}/>
+        </div>
+        <div className="section-title" style={{marginTop:20}}>AI Findings</div>
+        {invs.length===0 && <div className="nx-sub">No findings this period.</div>}
+        <ol style={{margin:0, paddingLeft:18, display:"flex", flexDirection:"column", gap:6}}>
+          {invs.map(i=><li key={i.id} style={{fontSize:12.6}}>{i.title} <span className="nx-sub">— {i.businessImpact} impact</span></li>)}
+        </ol>
+        <div className="section-title">Recommended Priorities</div>
+        <div style={{display:"flex", flexDirection:"column", gap:6}}>
+          {invs.map(i=>(
+            <div key={i.id} style={{display:"flex", justifyContent:"space-between", fontSize:12.4, padding:"7px 10px", background:"var(--bg-2)", borderRadius:7}}>
+              <span>{i.actionLabel}</span>
+              <Chip tone={i.severity==="crit"?"crit":i.severity==="att"?"att":"warn"}>{i.severity==="crit"?"Critical":i.severity==="att"?"High":"Medium"}</Chip>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ---------------------------------- INTEGRATIONS ---------------------------------- */
+function IntegrationsCenter({ notify }) {
+  const [state, setState] = useState(INTEGRATIONS);
+  const [busy, setBusy] = useState(null);
+  const categories = [...new Set(state.map(i=>i.category))];
+  function handleClick(item) {
+    setBusy(item.name);
+    setTimeout(()=>{
+      if (item.status==="Connected") {
+        notify(`${item.name}: connection test passed. API healthy.`, "good");
+      } else {
+        setState(list=>list.map(x=> x.name===item.name ? { ...x, status:"Connected", health:"Healthy", lastSync:"Just now" } : x));
+        notify(`${item.name} reconnected successfully.`, "good");
+      }
+      setBusy(null);
+    }, 1100);
+  }
+  return (
+    <div className="nx-page">
+      <div className="nx-pagehead"><div><div className="nx-h1">Integration Center</div><div className="nx-sub">Mock Integration Mode — adapters shown below simulate live connections for this prototype</div></div></div>
+      {categories.map(cat=>(
+        <div key={cat}>
+          <div className="section-title">{cat}</div>
+          <div className="nx-grid g-3">
+            {state.filter(i=>i.category===cat).map(i=>(
+              <div className="nx-card tight" key={i.name}>
+                <div style={{display:"flex", justifyContent:"space-between", alignItems:"center"}}>
+                  <div style={{display:"flex", alignItems:"center", gap:8}}>
+                    {i.status==="Connected" ? <span className="connline"/> : <span className="dot-status crit"/>}
+                    <span style={{fontWeight:600, fontSize:12.6}}>{i.name}</span>
+                  </div>
+                  {i.status==="Connected" ? <Chip tone="good">Connected</Chip> : <Chip tone="crit">Disconnected</Chip>}
+                </div>
+                <div style={{display:"flex", justifyContent:"space-between", marginTop:10, fontSize:11.3}}>
+                  <span className="nx-sub">API health: {i.health}</span>
+                  <span className="nx-sub">Last sync: {i.lastSync}</span>
+                </div>
+                <button className="btn sm ghost" style={{marginTop:10, width:"100%", justifyContent:"center"}} disabled={busy===i.name} onClick={()=>handleClick(i)}>
+                  {busy===i.name ? <Loader2 size={12} className="spin"/> : null}
+                  {i.status==="Connected" ? "Test Connection" : "Reconnect"}
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ---------------------------------- SETTINGS ---------------------------------- */
+function SettingsPage() {
+  const policyGroups = {
+    "Auto-approve": AUTOMATIONS.filter(a=>a.approval==="Auto-approve"),
+    "Requires approval": AUTOMATIONS.filter(a=>a.approval==="Requires approval"),
+    "Never autonomous": AUTOMATIONS.filter(a=>a.approval==="Never autonomous"),
+  };
+  return (
+    <div className="nx-page">
+      <div className="nx-pagehead"><div><div className="nx-h1">Settings</div><div className="nx-sub">MSP profile, technician access, and AI policy configuration</div></div></div>
+
+      <div className="section-title">MSP Profile</div>
+      <div className="nx-card nx-grid g-3">
+        <div><div className="nx-sub">Organization</div><div style={{fontWeight:600, marginTop:2}}>BS IT Consultancy</div></div>
+        <div><div className="nx-sub">Primary region</div><div style={{fontWeight:600, marginTop:2}}>APAC / Remote-first</div></div>
+        <div><div className="nx-sub">Technicians</div><div style={{fontWeight:600, marginTop:2}}>4 active seats</div></div>
+      </div>
+
+      <div className="section-title">AI Policy Engine <span className="count">Global default</span></div>
+      <div className="nx-grid g-3">
+        {Object.entries(policyGroups).map(([label, items])=>(
+          <div className="nx-card" key={label}>
+            <div className="kpi-label">
+              {label==="Auto-approve" ? <CheckCircle2 size={13} color="var(--good)"/> : label==="Requires approval" ? <ClipboardCheck size={13} color="var(--warn)"/> : <ShieldAlert size={13} color="var(--crit)"/>}
+              {label} <span className="count">{items.length}</span>
+            </div>
+            {items.map(a=><div key={a.name} style={{fontSize:12, padding:"6px 0", borderBottom:"1px solid var(--line-soft)"}}>{a.name}</div>)}
+          </div>
+        ))}
+      </div>
+      <div className="nx-sub" style={{marginTop:8}}>Policy can be overridden per customer from each customer's detail page.</div>
+
+      <div className="section-title">Notifications</div>
+      <div className="nx-card" style={{display:"flex", flexDirection:"column", gap:10}}>
+        {["Critical incidents", "Awaiting approval", "SLA at risk", "Weekly executive summary"].map(n=>(
+          <NotifToggle key={n} label={n}/>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function NotifToggle({ label }) {
+  const [on, setOn] = useState(true);
+  return (
+    <div style={{display:"flex", justifyContent:"space-between", alignItems:"center"}}>
+      <span style={{fontSize:12.6}}>{label}</span>
+      <span style={{cursor:"pointer"}} onClick={()=>setOn(o=>!o)}>
+        {on ? <Chip tone="good" icon={CheckCircle2}>Enabled</Chip> : <Chip tone="neutral" icon={Circle}>Disabled</Chip>}
+      </span>
+    </div>
+  );
+}
+
+/* ---------------------------------- INCIDENTS ---------------------------------- */
+function Incidents({ goInvestigation, customerFilter }) {
+  const list = customerFilter==="all" ? INVESTIGATIONS : INVESTIGATIONS.filter(i=>i.customer===customerFilter);
+  return (
+    <div className="nx-page">
+      <div className="nx-pagehead"><div><div className="nx-h1">Incidents</div><div className="nx-sub">{customerFilter==="all" ? "AI-correlated incidents ranked by severity — click to open the full investigation" : `Filtered to ${custName(customerFilter)}`}</div></div></div>
       <div className="nx-card" style={{padding:0}}>
         <table className="nx-table">
           <thead><tr><th>Severity</th><th>Incident</th><th>Customer</th><th>Confidence</th><th>Impact</th><th>Status</th></tr></thead>
           <tbody>
-            {INVESTIGATIONS.map(i=>(
+            {list.map(i=>(
               <tr key={i.id} className="clickable" onClick={()=>goInvestigation(i.id)}>
                 <td><Chip tone={sevColor(i.severity)}>{i.severity==="crit"?"Critical":i.severity==="att"?"Attention":"Warning"}</Chip></td>
                 <td style={{fontWeight:600}}>{i.title}</td>
@@ -1205,13 +2180,15 @@ function TicketTable({ tickets, showCustomer=true, onOpenInv }) {
     </div>
   );
 }
-function TicketsPage({ tickets, goInvestigation }) {
+function TicketsPage({ tickets, goInvestigation, customerFilter }) {
+  const list = customerFilter==="all" ? tickets : tickets.filter(t=>t.customer===customerFilter);
   return (
     <div className="nx-page">
-      <div className="nx-pagehead"><div><div className="nx-h1">Tickets</div><div className="nx-sub">126 open tickets · AI triage active on all incoming tickets</div></div>
+      <div className="nx-pagehead"><div><div className="nx-h1">Tickets</div><div className="nx-sub">{customerFilter==="all" ? "126 open tickets · AI triage active on all incoming tickets" : `Filtered to ${custName(customerFilter)}`}</div></div>
         <button className="btn primary"><TicketIcon size={13}/>New Ticket</button>
       </div>
-      <TicketTable tickets={tickets} onOpenInv={goInvestigation}/>
+      {list.length===0 && <div className="nx-card nx-sub">No tickets for this customer.</div>}
+      <TicketTable tickets={list} onOpenInv={goInvestigation}/>
     </div>
   );
 }
@@ -1302,13 +2279,22 @@ export default function NexusMspAi() {
   const [toast, setToast] = useState(null);
   const [aiQuery, setAiQuery] = useState("");
   const [aiResult, setAiResult] = useState(null);
+  const [customerFilter, setCustomerFilter] = useState("all");
+  const [timeRange, setTimeRange] = useState("Last 24h");
   const timers = useRef([]);
+  const notifyTimer = useRef(null);
 
   useEffect(()=>()=>timers.current.forEach(clearTimeout), []);
 
+  function notify(text, tone="good") {
+    setToast({ text, tone });
+    if (notifyTimer.current) clearTimeout(notifyTimer.current);
+    notifyTimer.current = setTimeout(()=>setToast(null), 3600);
+  }
+
   function setView(v){ setViewRaw(v); }
   function goInvestigation(id){ setSelectedInvId(id); setViewRaw("investigation-detail"); }
-  function goCustomer(id){ setSelectedCustomerId(id); setViewRaw("customer-detail"); }
+  function goCustomer(id){ setSelectedCustomerId(id); setCustomerFilter(id); setViewRaw("customer-detail"); }
   function goDevice(id){ setSelectedDeviceId(id); setViewRaw("device-detail"); }
 
   function pushAudit(text, meta) {
@@ -1317,6 +2303,7 @@ export default function NexusMspAi() {
   }
 
   function startGateway(inv) {
+
     pushAudit(`${inv.category} Agent flagged "${inv.title}" for review.`, custName(inv.customer));
     setGateways(g=>({ ...g, [inv.id]: { stageIndex: 3 } }));
     const seq = [
@@ -1416,16 +2403,29 @@ export default function NexusMspAi() {
   const navItem = NAV_SECTIONS.flatMap(s=>s.items).find(i=>i.id===view);
 
   let body;
-  if (view==="overview") body = <Overview goInvestigation={goInvestigation} setView={setView}/>;
-  else if (view==="aicc") body = <AICommandCenter goInvestigation={goInvestigation} aiResult={aiResult}/>;
+  if (view==="overview") body = <Overview goInvestigation={goInvestigation} setView={setView} customerFilter={customerFilter}/>;
+  else if (view==="aicc") body = <AICommandCenter goInvestigation={goInvestigation} aiResult={aiResult} customerFilter={customerFilter}/>;
   else if (view==="investigation-detail") body = <InvestigationDetail inv={selectedInv} setView={setView} gateway={gateways[selectedInvId]} startGateway={startGateway} ticketFor={ticketFor}/>;
   else if (view==="customers") body = <Customers goCustomer={goCustomer}/>;
   else if (view==="customer-detail") body = <CustomerDetail customer={selectedCustomer} setView={setView} goInvestigation={goInvestigation} goDevice={goDevice}/>;
-  else if (view==="devices") body = <Devices goDevice={goDevice}/>;
-  else if (view==="device-detail") body = <DeviceDetail device={selectedDevice} setView={setView} goInvestigation={goInvestigation}/>;
+  else if (view==="devices") body = <Devices goDevice={goDevice} customerFilter={customerFilter}/>;
+  else if (view==="device-detail") body = <DeviceDetail device={selectedDevice} setView={setView} goInvestigation={goInvestigation} notify={notify}/>;
   else if (view==="monitoring") body = <MonitoringPage/>;
-  else if (view==="incidents") body = <Incidents goInvestigation={goInvestigation}/>;
-  else if (view==="tickets") body = <TicketsPage tickets={tickets} goInvestigation={goInvestigation}/>;
+  else if (view==="patch") body = <PatchManagement goInvestigation={goInvestigation}/>;
+  else if (view==="backup") body = <BackupDR goInvestigation={goInvestigation}/>;
+  else if (view==="incidents") body = <Incidents goInvestigation={goInvestigation} customerFilter={customerFilter}/>;
+  else if (view==="tickets") body = <TicketsPage tickets={tickets} goInvestigation={goInvestigation} customerFilter={customerFilter}/>;
+  else if (view==="security") body = <SecurityCenter goInvestigation={goInvestigation}/>;
+  else if (view==="identity") body = <IdentitySecurity goInvestigation={goInvestigation}/>;
+  else if (view==="network") body = <NetworkOps goInvestigation={goInvestigation}/>;
+  else if (view==="cloud") body = <CloudOps/>;
+  else if (view==="automation") body = <AutomationCenter/>;
+  else if (view==="agents") body = <AIAgentsPage/>;
+  else if (view==="knowledge") body = <KnowledgeCenter/>;
+  else if (view==="compliance") body = <ComplianceCenter/>;
+  else if (view==="reports") body = <ReportsPage/>;
+  else if (view==="integrations") body = <IntegrationsCenter notify={notify}/>;
+  else if (view==="settings") body = <SettingsPage/>;
   else if (view==="audit") body = <AuditLogView log={auditLog}/>;
   else body = <PhasePlaceholder item={navItem || {label:"Module", icon:Cog, phase:3}}/>;
 
@@ -1435,7 +2435,15 @@ export default function NexusMspAi() {
       <style>{`.spin{animation:nxspin 1s linear infinite;} @keyframes nxspin{to{transform:rotate(360deg);}}`}</style>
       <Sidebar view={view==="investigation-detail"?"aicc":view==="customer-detail"?"customers":view==="device-detail"?"devices":view} setView={setView} collapsed={collapsed} setCollapsed={setCollapsed}/>
       <div className="nx-main">
-        <TopBar nav={view} approvalCount={approvalBadgeCount} onOpenApprovals={()=>setApprovalsOpen(true)} aiQuery={aiQuery} setAiQuery={setAiQuery} onRunAiQuery={runAiQuery}/>
+        <TopBar
+          approvalCount={approvalBadgeCount}
+          onOpenApprovals={()=>setApprovalsOpen(true)}
+          aiQuery={aiQuery} setAiQuery={setAiQuery} onRunAiQuery={runAiQuery}
+          customerFilter={customerFilter} setCustomerFilter={setCustomerFilter}
+          timeRange={timeRange} setTimeRange={setTimeRange}
+          goCustomer={goCustomer} goDevice={goDevice} goInvestigation={goInvestigation}
+          tickets={tickets} notify={notify}
+        />
         {body}
       </div>
       <ApprovalsDrawer
